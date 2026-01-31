@@ -1,6 +1,5 @@
 using LotterySportOrient.Models;
 using LotterySportOrient.Services;
-using System.Runtime.CompilerServices;
 
 namespace LotterySportOrient
 {
@@ -10,14 +9,18 @@ namespace LotterySportOrient
         private List<Group> _allGroups;
         private List<Group> _groups;
         private List<Result> _results;
+        private List<Result> _allResults;
         private int count = 0;
         public FormMain(List<Race> races)
         {
             InitializeComponent();
             _race = races[0];
             _allGroups = _race.Groups;
+            _allGroups.Reverse();
             _groups = _allGroups;
-            _results = _race.Results;
+
+            _allResults = _race.Results;
+            _results = _allResults;
 
             checkedListBoxGroups.Enabled = false;
 
@@ -36,7 +39,6 @@ namespace LotterySportOrient
                 checkedListBoxGroups.Items.Add(group.Name);
             }
         }
-
 
         private void radioButtonRangeGroups_CheckedChanged(object sender, EventArgs e)
         {
@@ -67,23 +69,84 @@ namespace LotterySportOrient
                 .ToList();
         }
 
+        private List<Result> FilterByGroup(List<Group> groups)
+        {
+            if (radioButtonAllGroups.Checked)
+                return _allResults;
+
+            var groupIds = groups
+                .Select(g => g.Id)
+                .ToHashSet();
+
+            var personIds = _race.Persons
+                .Where(p => groupIds.Contains(p.GroupId))
+                .Select(p => p.Id)
+                .ToHashSet();
+
+            return _allResults
+                .Where(r => personIds.Contains(r.PersonId))
+                .ToList();
+        }
+
+        private List<Result> FilterByWins(List<Result> source)
+        {
+            if (!checkBoxOnlyWins.Checked)
+                return source;
+
+            return source
+                .Where(r => r.Place >= 1 && r.Place <= 3)
+                .ToList();
+        }
+
+
         private void buttonGenerate_Click(object sender, EventArgs e)
         {
-            if (_groups.Count == 0)
+            if (_results == null || _results.Count == 0)
             {
-                MessageBox.Show("Нет выбранных групп");
+                MessageBox.Show("Нет результатов по выбранным условиям");
                 return;
             }
 
-            if (count >= _groups.Count)
+            if (count >= _results.Count)
             {
                 MessageBox.Show("Список закончился");
                 return;
             }
 
-            labelNumber.Text = _groups[count].Name;
+            var current = _results[count];
+            Result previous = count > 0 ? _results[count - 1] : null;
+
+            // текущий
+            var person = _race.Persons.FirstOrDefault(p => p.Id == current.PersonId);
+            var group = _race.Groups.FirstOrDefault(g => g.Id == person?.GroupId);
+
+            labelNumber.Text = current.Bib.ToString();
+            labelName.Text = person?.Name ?? "-";
+            labelSurname.Text = person?.Surname ?? "-";
+            labelGroupName.Text = group?.Name ?? "-";
+
+            // предыдущий
+            if (previous != null)
+            {
+                var personPrev = _race.Persons.FirstOrDefault(p => p.Id == previous.PersonId);
+                var groupPrev = _race.Groups.FirstOrDefault(g => g.Id == personPrev?.GroupId);
+
+                labelBibPred.Text = previous.Bib.ToString();
+                labelNamePred.Text = personPrev?.Name ?? "-";
+                labelSurnamePred.Text = personPrev?.Surname ?? "-";
+                labelGroupPred.Text = groupPrev?.Name ?? "-";
+            }
+            else
+            {
+                labelBibPred.Text = "-";
+                labelNamePred.Text = "-";
+                labelSurnamePred.Text = "-";
+                labelGroupPred.Text = "-";
+            }
+
             count++;
         }
+
 
         private void FormMain_Load(object sender, EventArgs e)
         {
@@ -92,21 +155,27 @@ namespace LotterySportOrient
 
         private void LoadData()
         {
-            if (!radioButtonAllGroups.Checked)
-            {
-                _groups = FilterByCheckedGroup();
-                _groups = Service.RandomizedList(_groups);
-                count = 0;
-            }
-            else
-            {
+            _groups = FilterByCheckedGroup();
 
-            }
+            var results = FilterByGroup(_groups);
+            results = FilterByWins(results);
+
+            _results = Service.RandomizedList(results);
+            count = 0;
         }
+
 
         private void checkedListBoxGroups_SelectedIndexChanged(object sender, EventArgs e)
         {
             LoadData();
+        }
+
+        private void buttonDeleteFilters_Click(object sender, EventArgs e)
+        {
+            radioButtonAllGroups.Checked = true;
+            checkBoxOnlyWins.Checked = false;
+            _results = _allResults;
+            _groups = _allGroups;
         }
     }
 }
