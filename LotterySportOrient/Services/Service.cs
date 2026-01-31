@@ -29,5 +29,11 @@ namespace LotterySportOrient.Services
                 return new List<Race>();
             }
         }
+
+        public static List<T> RandomizedList<T>(IEnumerable<T> list)
+        {
+            Random rnd = new Random();
+            return list.OrderBy(_ => rnd.Next()).ToList();
+        }
     }
 }

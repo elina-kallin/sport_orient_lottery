@@ -21,7 +21,7 @@ namespace LotterySportOrient.Views
 
             if(races.Count > 0)
             {
-                var formMain = new FormMain();
+                var formMain = new FormMain(races);
                 this.Hide();
                 formMain.ShowDialog();
                 this.Show();
