@@ -125,23 +125,23 @@ namespace LotterySportOrient
             labelSurname.Text = person?.Surname ?? "-";
             labelGroupName.Text = group?.Name ?? "-";
 
+            string allPrevRes = "";
+
             // предыдущий
             if (previous != null)
             {
                 var personPrev = _race.Persons.FirstOrDefault(p => p.Id == previous.PersonId);
                 var groupPrev = _race.Groups.FirstOrDefault(g => g.Id == personPrev?.GroupId);
 
-                labelBibPred.Text = previous.Bib.ToString();
-                labelNamePred.Text = personPrev?.Name ?? "-";
-                labelSurnamePred.Text = personPrev?.Surname ?? "-";
-                labelGroupPred.Text = groupPrev?.Name ?? "-";
+                allPrevRes = $"{previous.Bib} |  {personPrev?.Surname} {personPrev?.Name}  | {groupPrev?.Name}"; 
+
+                listBoxStackResults.Items.Insert(0, allPrevRes);
             }
             else
             {
-                labelBibPred.Text = "-";
-                labelNamePred.Text = "-";
-                labelSurnamePred.Text = "-";
-                labelGroupPred.Text = "-";
+                allPrevRes = "";
+                listBoxStackResults.Items.Insert(0, allPrevRes);
+
             }
 
             count++;

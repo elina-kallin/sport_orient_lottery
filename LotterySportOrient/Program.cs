@@ -1,4 +1,5 @@
 using LotterySportOrient.Views;
+using System.Text;
 
 namespace LotterySportOrient
 {
